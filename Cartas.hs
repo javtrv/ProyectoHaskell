@@ -1,3 +1,4 @@
+
 -- Imports
 
 -- Tipos de datos para carta
@@ -94,8 +95,8 @@ cantidadCartas (Mano lista) = sum [1 | _ <- lista]
 
 toInt ::Rango -> Int
 toInt Jack = 10
-toInt Queen = 11
-toInt King = 12
+toInt Queen = 10
+toInt King = 10
 toInt Ace = 11
 toInt (N i) = i
 
@@ -122,12 +123,39 @@ blackjack m = if valor m == 21 then True else False
 --devuelve True si su valor excede 21, y False de otra forma.
 
 
-ganador :: Mano ->Mano ->Jugador
+ganador :: Mano ->Mano -> Jugador
 ganador manoDealer manoJugador 
+    | busted manoDealer = Player
+    | busted manoJugador = Dealer
     | (blackjack manoDealer)&&(cantidadCartas manoDealer == 2) = Dealer
+    | (blackjack manoJugador)&&(cantidadCartas manoJugador == 2) = Player
+    | (valor manoDealer == valor manoJugador) = Dealer
+    | (valor manoDealer > valor manoJugador) = Dealer
+    | (valor manoDealer < valor manoJugador) = Player
     | otherwise = Player
 --Recibe la Mano del Dealer de primero, la mano del Player de segundo, y devuelve el ganador, seg´un las
 --reglas del juego antes descritas.
 
+
+-- takeMano devuelve un tipo [Carta] pero al ser llamada debe ser llamada como Mano $ takeMano ...
+-- Funcion auxiliar para separar la mano, devuelve los primeros indice cartas de una mano
+takeMano :: Mano -> Int -> [Carta]
+takeMano _ 0 = []
+takeMano (Mano lista) indice =  ((head lista):takeMano (Mano (tail lista)) (indice-1))
+
+-- dropMano devuelve un tipo [Carta] pero al ser llamada debe ser llamada como Mano $ dropMano ...
+-- Funcion auxiliar para separar la mano, devuelve los ultimos indice cartas de una mano
+dropMano :: Mano -> Int -> [Carta]
+dropMano (Mano lista) indice
+                         | indice > 0 = dropMano (Mano (tail lista)) (indice-1)
+                         | indice == 0 = lista
+
+-- IMPORTANTE para obtener el elemento medio debo tomar HEAD de la lista que devuelve llamar dropMano con indice = cantidadCartas `div` 2. 
+-- Sabiendo esto entonces
+
+separar :: Mano -> (Mano, Carta,Mano)
+separar mano
+              | even $ cantidadCartas mano = (Mano $ takeMano mano (cantidadCartas mano `div` 2), head $ dropMano mano (cantidadCartas mano `div` 2), Mano $ dropMano mano ((cantidadCartas mano `div` 2)+1))
+              | otherwise = (Mano $ takeMano mano (cantidadCartas mano `div` 2), head $ dropMano mano ((cantidadCartas mano `div` 2)+1), Mano $ dropMano mano ((cantidadCartas mano `div` 2)+1))
 
 
