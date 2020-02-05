@@ -1,6 +1,7 @@
 
 -- Imports
 import System.Random
+import Data.List
 
 -- Tipos de datos para carta
 data Palo = Treboles | Diamantes | Picas | Corazones  deriving (Eq,Ord)
@@ -14,7 +15,11 @@ data Carta = Carta {
 data Jugador = Dealer | Player deriving (Read)
 
 -- Tipo Mano
-newtype Mano = Mano [Carta]
+newtype Mano = Mano [Carta] deriving (Eq)
+
+-- tipo Mazo
+data Mazo = Vacio | Mitad Carta Mazo Mazo deriving (Show,Eq)
+data Eleccion = Izquierdo | Derecho
 
 
 -- Funciones Show para cartas
@@ -82,6 +87,9 @@ listaPalo = [Treboles,Diamantes,Picas,Corazones]
 listaRango :: [Rango]
 listaRango = [N 2,N 3,N 4,N 5,N 6,N 7,N 8,N 9,N 10,Jack,Queen,King,Ace]
 
+ejemploPicas :: Mano
+ejemploPicas = Mano [Carta y Picas |  y <- listaRango]
+
 
 baraja :: Mano
 baraja = Mano [Carta y x | x <- listaPalo, y <- listaRango]
@@ -99,9 +107,6 @@ toInt Queen = 10
 toInt King = 10
 toInt Ace = 11
 toInt (N i) = i
-
-
-
 
 checkAces :: Mano -> Int
 checkAces (Mano lista) = sum[1 | (Carta x y) <- lista, x == Ace]
@@ -160,8 +165,8 @@ takeCart mano indice = head $ dropMano mano $ indice-1
 
 separar :: Mano -> (Mano, Carta, Mano)
 separar mano
-              | even $ cantidadCartas mano = (Mano $ takeMano mano (cantidadCartas mano `div` 2),takeCart mano (cantidadCartas mano `div` 2), Mano $ dropMano mano ((cantidadCartas mano `div` 2)+1))
-              | otherwise = (Mano $ takeMano mano (cantidadCartas mano `div` 2), takeCart mano ((cantidadCartas mano `div` 2)+1), Mano $ dropMano mano ((cantidadCartas mano `div` 2)+1))
+        | even $ cantidadCartas mano = (Mano $ takeMano mano (cantidadCartas mano `div` 2),takeCart mano ((cantidadCartas mano `div` 2)+1), Mano $ dropMano mano ((cantidadCartas mano `div` 2)+1))
+        | otherwise = (Mano $ takeMano mano (cantidadCartas mano `div` 2), takeCart mano ((cantidadCartas mano `div` 2)+1), Mano $ dropMano mano ((cantidadCartas mano `div` 2)+1))
 
 addCart :: Carta -> Mano -> Mano
 addCart carta (Mano lista) = Mano (lista ++ [carta])
@@ -188,7 +193,7 @@ elemCart carta (Mano lista) = carta `elem` lista
 unirManos :: Mano -> Mano -> Mano
 unirManos mano (Mano []) = mano
 unirManos (Mano []) mano = mano
-unirManos (Mano lista1) (Mano lista2) = Mano (lista1++lista2)
+unirManos (Mano lista1) (Mano lista2) = Mano (nub $ lista1++lista2)
 
 
 
@@ -222,3 +227,92 @@ inicialLambda mano = (Mano $ takeMano mano 2, Mano $ dropMano mano 2)
 --Recibe la baraja inicial barajada como Mano, y devuelve la Mano inicial de Lambda tomando las dos
 --primeras cartas, y la baraja resultante de retirar dichas cartas.
 -- Aprovechamos de usar nuestras funciones takeMano y dropMano que sirven para quitar cartas.
+
+fst3 :: (a,b,c) -> a
+fst3 (a,_,_) = a
+
+snd3 :: (a,b,c) -> b
+snd3 (_,b,_) = b
+
+thrd3:: (a,b,c) -> c
+thrd3 (_,_,c) = c
+
+
+-- Funciones para Mazo
+
+--Funciones de construccion
+
+desdeMano :: Mano -> Mazo
+desdeMano (Mano []) = Vacio
+desdeMano mano = Mitad (snd3 $ separar mano) (desdeMano $ fst3 $ separar mano) (desdeMano $ thrd3 $ separar mano)
+
+-- Funciones de acceso
+
+puedePicar :: Mazo -> Bool
+puedePicar Vacio = False
+puedePicar (Mitad _ Vacio _) = False
+puedePicar (Mitad _ _ Vacio) = False
+puedePicar (Mitad _ _ _ ) = True
+
+-- Funciones de modificacion
+inorder :: Mazo -> [Carta]
+inorder Vacio         =  []
+inorder (Mitad carta l r) = inorder l ++ (carta : inorder r)
+
+-- Recorre el mazo en inorden y devuelve una lissta de cartas
+
+aplanar :: Mazo -> Mano
+aplanar mazo = Mano (inorder mazo)
+
+
+
+restarManos :: Mano -> Mano -> Mano
+restarManos (Mano lista1) (Mano lista2) = Mano (lista2 \\ lista1)
+--  restarManos toma 2 manos y devuelve una Mano que contiene las cartas que estaban en la primera pero no en la segunda
+-- es lista2 - lista1 por como esta llamada en reconstruir
+
+devuelveEleccion :: Mazo -> Eleccion -> Mazo
+devuelveEleccion Vacio _ = Vacio
+devuelveEleccion (Mitad carta l r) Izquierdo = l
+devuelveEleccion (Mitad carta l r) Derecho = r
+
+dropCartMazo :: Mazo -> Carta-> Mazo
+dropCartMazo mazo carta = desdeMano $ Mano (dropCart (aplanar mazo) carta)
+-- Elimina una Carta del mazo
+
+firstCart :: Mazo -> Carta
+firstCart (Mitad carta l r) =  carta
+
+-- Devuelve la primera carta del mazo
+
+reconstruir :: Mazo -> Mano -> Mazo
+reconstruir mazo mano =  desdeMano $ restarManos mano $ aplanar mazo
+
+
+robar :: Mazo ->Mano -> Eleccion -> Maybe (Mazo,Mano)
+robar Vacio _ _ = Nothing
+robar mazo mano eleccion = Just ((devuelveEleccion mazo eleccion), unirManos mano $ Mano [firstCart (devuelveEleccion mazo eleccion)])
+
+
+{- 
+	Recibe el Mazo actual, la mano del jugador y una Eleccion. Debe devolver una tupla con el Mazo
+	resultante (la Eleccion indica qué hijo del Mazo se usará) y la Mano resultante. Devolverá Nothing si no
+	quedan cartas que sacar (aunque esto no deberı́a ocurrir).
+-}
+
+robarDealer:: Mazo -> Mano -> Mano
+robarDealer (Mitad carta l r) (Mano lista) = Mano (lista++[carta])
+
+-- robarDealer toma un mazo y una mano y devuelve la mano despues de robar la primera carta del mazo
+
+
+juegaLambda :: Mazo -> Mano ->Maybe Mano
+juegaLambda (Mitad carta l r) mano
+                   | (valor mano) > 16  = Just mano
+                   | otherwise = juegaLambda (dropCartMazo (Mitad carta l r) carta) (robarDealer (Mitad carta l r) mano)
+{-
+	Recibe el Mazo actual, lo vuelve a convertir en una Mano en el orden apropiado, recibe la Mano del dealer,
+	y devuelve la Mano resultante de robar hasta que supere un valor de 16. Devolverá Nothing si no quedan
+	cartas que sacar (aunque esto no deberı́a ocurrir).
+-}
+
