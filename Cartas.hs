@@ -1,5 +1,6 @@
 
 -- Imports
+import System.Random
 
 -- Tipos de datos para carta
 data Palo = Treboles | Diamantes | Picas | Corazones  deriving (Eq,Ord)
@@ -8,7 +9,7 @@ data Rango = N Int | Jack | Queen | King | Ace deriving (Eq,Ord)
 data Carta = Carta {
                         rango :: Rango,
                         palo :: Palo
-                    } 
+                    } deriving (Eq)
 -- Tipo Jugador
 data Jugador = Dealer | Player deriving (Read)
 
@@ -70,8 +71,7 @@ showJugador Player = "Player"
 
 instance Show Mano  where
     show (Mano []) = []
-    show (Mano x) = show x
-
+    show (Mano x) = unwords $ map show x
 
 vacia :: Mano
 vacia = Mano  []
@@ -146,6 +146,7 @@ takeMano (Mano lista) indice =  ((head lista):takeMano (Mano (tail lista)) (indi
 -- dropMano devuelve un tipo [Carta] pero al ser llamada debe ser llamada como Mano $ dropMano ...
 -- Funcion auxiliar para separar la mano, devuelve los ultimos indice cartas de una mano
 dropMano :: Mano -> Int -> [Carta]
+dropMano (Mano []) _ = []
 dropMano (Mano lista) indice
                          | indice > 0 = dropMano (Mano (tail lista)) (indice-1)
                          | indice == 0 = lista
@@ -153,9 +154,71 @@ dropMano (Mano lista) indice
 -- IMPORTANTE para obtener el elemento medio debo tomar HEAD de la lista que devuelve llamar dropMano con indice = cantidadCartas `div` 2. 
 -- Sabiendo esto entonces
 
-separar :: Mano -> (Mano, Carta,Mano)
+takeCart :: Mano -> Int -> Carta
+takeCart mano indice = head $ dropMano mano $ indice-1
+-- takeCart toma la carta numero indice-1 de la mano 
+
+separar :: Mano -> (Mano, Carta, Mano)
 separar mano
-              | even $ cantidadCartas mano = (Mano $ takeMano mano (cantidadCartas mano `div` 2), head $ dropMano mano (cantidadCartas mano `div` 2), Mano $ dropMano mano ((cantidadCartas mano `div` 2)+1))
-              | otherwise = (Mano $ takeMano mano (cantidadCartas mano `div` 2), head $ dropMano mano ((cantidadCartas mano `div` 2)+1), Mano $ dropMano mano ((cantidadCartas mano `div` 2)+1))
+              | even $ cantidadCartas mano = (Mano $ takeMano mano (cantidadCartas mano `div` 2),takeCart mano (cantidadCartas mano `div` 2), Mano $ dropMano mano ((cantidadCartas mano `div` 2)+1))
+              | otherwise = (Mano $ takeMano mano (cantidadCartas mano `div` 2), takeCart mano ((cantidadCartas mano `div` 2)+1), Mano $ dropMano mano ((cantidadCartas mano `div` 2)+1))
+
+addCart :: Carta -> Mano -> Mano
+addCart carta (Mano lista) = Mano (lista ++ [carta])
+-- addCarta AGREGA una carta a una mano de cartas
 
 
+dropCart::Mano->Carta->[Carta]
+dropCart (Mano []) carta = []
+dropCart (Mano lista) carta
+    | head lista == carta = dropCart (Mano (tail lista)) carta
+    | otherwise = head lista:( dropCart (Mano (tail lista)) carta )
+
+-- dropCarta elimina una carta de una mano
+
+
+generaRandom :: Int -> Int -> StdGen -> (Int,StdGen)
+generaRandom a b g = randomR(a,b) g
+-- generaRandom toma 2 numeros y un StGen y usando la funcion randomRs (que genera una lista), tomamos uno de esos elementos.
+
+
+elemCart :: Carta -> Mano -> Bool
+elemCart carta (Mano lista) = carta `elem` lista 
+
+unirManos :: Mano -> Mano -> Mano
+unirManos mano (Mano []) = mano
+unirManos (Mano []) mano = mano
+unirManos (Mano lista1) (Mano lista2) = Mano (lista1++lista2)
+
+
+
+barajar :: StdGen -> Mano -> Mano
+barajar gen (Mano []) = Mano []
+barajar gen mano = unirManos (Mano ([takeCart mano $ fst (generaRandom 1 (cantidadCartas mano) gen)])) (barajar (snd (generaRandom 1 ((cantidadCartas mano)*14) gen)) (Mano $ dropCart mano $ (takeCart mano (fst(generaRandom 1 (cantidadCartas mano) gen)))))
+--
+{-
+(Mano ([takeCart mano $ fst (generaRandom 0 51 gen)])) devuelve una MANO que tiene solo una carta, que se aleatoria trae de mano, 
+(barajar snd (generaRandom 0 51 gen) $ Mano $ dropCart snd (generaRandom 0 51 gen) $ (takeCart mano (fst(generaRandom 0 51 gen)))) es otra vez barajar sobre:
+
+    snd (generaRandom 0 51 gen) genera una nueva semilla g
+    Mano $ dropCart snd (generaRandom 0 51 gen) $ (takeCart mano (fst(generaRandom 0 51 gen)))) - Mano que tiene toda la mano inicial menos la carta que ya salio
+
+-}
+{-
+
+
+Esta función será usada para barajar las cartas al inicio de cada ronda. Para ello, es necesario el tipo
+de datos StdGen, incluido en el módulo System.Random. El segundo argumento recibido por la función
+es la Mano a barajar, y debe devolverse la mano ya barajada. Para ello, se debe empezar por una Mano
+vacı́a para acumular. Luego, debe seleccionarse una carta al azar, la cuál debe ser colocada al principio
+de la Mano acumuladora. Esto debe hacerse hasta que se hayan pasado todas las cartas hasta la Mano
+acumuladora.
+-}
+
+
+
+inicialLambda :: Mano -> (Mano, Mano)
+inicialLambda mano = (Mano $ takeMano mano 2, Mano $ dropMano mano 2)
+--Recibe la baraja inicial barajada como Mano, y devuelve la Mano inicial de Lambda tomando las dos
+--primeras cartas, y la baraja resultante de retirar dichas cartas.
+-- Aprovechamos de usar nuestras funciones takeMano y dropMano que sirven para quitar cartas.
