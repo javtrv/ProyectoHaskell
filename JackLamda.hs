@@ -14,7 +14,6 @@ import System.Directory
 import System.IO.Error
 import Data.List
 import Control.Monad
-import Control.Monad.State
 
 data GameState = GS {
                     juegosJugados  :: Int,
@@ -26,6 +25,19 @@ data GameState = GS {
                     objetivo       :: Int,
                     apuesta        :: Int
                     } deriving (Show, Read)
+
+
+--Varibles globales
+nombreInfo = " "
+juegosInt = 0
+vicLamdaInt = 0
+vicJugInt = 0
+dineroInt = 0 
+objetoInt = 0
+apuestaInt = 0
+
+
+
 
 main :: IO ()
 main = do
