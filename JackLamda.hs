@@ -8,6 +8,7 @@
 
 --imports
 --import System.Random
+import Cartas
 import System.Environment
 import System.IO
 import System.Directory
@@ -20,7 +21,7 @@ data GameState = GS {
                     victoriasLamda :: Int,
                     victoriasJugador :: Int,
                     nombre         :: String,
-                   -- generador      :: StdGen,
+                    generador      :: StdGen,
                     dinero         :: Int,
                     objetivo       :: Int,
                     apuesta        :: Int
@@ -131,8 +132,12 @@ apuestaDo dineroInfo = do
                     apuestaDo dineroInfo
 
 
-jugarRonda = do putStrLn $ "Entrates a jugar ronda" 
-
+jugarRonda = do
+ {-   let baraInfo = baraja
+        manoBarajada = barajar generador baraInfo
+        manoLamda = inicialLamda manoBarajada
+    putStrLn $ "Mano Lamda: " ++ manoLamda    
+-}
 guardarPartida = do 
     putStrLn "Introduzca un nombre de archivo"
     fileName <- getLine
@@ -149,7 +154,6 @@ guardarPartida = do
                 objetoInfo = show objetoInt
                 apuestaInfo = show apuestaInt
                 copyInfo = nombreInfo ++ "\n" ++ juegosInfo ++ "\n" ++ vicLamdaInfo ++ "\n" ++ vicJugInfo ++ "\n" ++ dineroInfo ++ "\n" ++ objetoInfo ++ "\n" ++ apuestaInfo
-            --    variable = copyInfo.nombre
             writeFile fileName $ copyInfo
             main
 
