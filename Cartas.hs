@@ -1,7 +1,26 @@
-module Cartas where
+
+module Cartas
+( barajar
+, baraja
+, vacia
+, cantidadCartas
+, valor
+, busted
+, blackjack
+, ganador
+, separar
+, inicialLambda
+, desdeMano
+, puedePicar
+, aplanar
+, reconstruir
+, robar
+, juegaLambda
+) where
+
 {-
     Proyecto Haskell
-    Cartas.hs: Es un juego interctivo de BlackJack.
+    JackLamda: Es un juego interctivo de BlackJack.
     Autores: Honorio Rodriguez #09-11023.
     Javier Medina     #12-10400.
     Ult. Actualización: 09/02/2020.

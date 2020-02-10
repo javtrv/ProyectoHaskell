@@ -8,6 +8,7 @@
 
 --imports
 --import System.Random
+import Cartas
 import System.Environment
 import System.IO
 import System.Directory
@@ -22,7 +23,7 @@ data GameState = GS {
                     victoriasLamda :: Int,
                     victoriasJugador :: Int,
                     nombre         :: String,
-                   -- generador      :: StdGen,
+                    generador      :: StdGen,
                     dinero         :: Int,
                     objetivo       :: Int,
                     apuesta        :: Int
@@ -46,7 +47,6 @@ crearGameState g juegosNew vLamdaNew vJugadorNew nombreNew dineroNew objetivoNew
 
 main :: IO ()
 main = do
-    --let estado = GS {juegosJugados = 0, victoriasLamda = 0, victoriasJugador = 0, nombre = "Jugador", dinero = 0, objetivo = 0, apuesta = 0}
     putStrLn " Bienvenido(a) a JackLamda \n"
     putStrLn "      Si desea cargar una partida introduzca 1"
     putStrLn "      No desea cargar una partida introduzca 2"
@@ -109,37 +109,19 @@ info = do
     objetoInfo <-getLine
     putStrLn "Introduza la cantidad de dinero a ser apostado"
     apuestaInfo <-getLine
-    let resultadoGameState = crearGameState gameStateGenerico 0 0 0 nombreInfo 1 11 111
+    let dineroInt = read dineroInfo :: Int
+    let objetoInt = read objetoInfo :: Int
+    let apuestaInt = read apuestaInfo :: Int
+    let resultadoGameState = crearGameState gameStateGenerico 0 0 0 nombreInfo dineroInt objetoInt apuestaInt
     ciclo resultadoGameState
 
-{-
-objectoDo dineroInfo = do
-            putStrLn "Introduzca la cantidad de dinero que debe alcanzar para ganar la partida"
-            objetoInfo <-getLine
-            let objetoInt = read objetoInfo :: Int
-                dineroInt = read dineroInfo :: Int  
-            if objetoInt > dineroInt 
-                then do 
-                    return ()
-                else do
-                    putStrLn $ "La cantidad introducida es menor al dinero inicial introucido que es: " ++ dineroInfo ++ "\n"
-                    objectoDo dineroInfo
 
-apuestaDo dineroInfo = do
-            putStrLn "Introduza la cantidad de dinero a ser apostado"
-            apuestaInfo <-getLine
-            let apuestaInt = read apuestaInfo :: Int
-                dineroInt = read dineroInfo :: Int
-            if 0 < apuestaInt && apuestaInt <= dineroInt
-                then do 
-                    return ()
-                else do
-                    putStrLn $ "La apuesta introducida es menor a cero o es mayor a la cantidad inicial: " ++ dineroInfo ++ "\n"
-                    apuestaDo dineroInfo
-
+jugarRonda = do
+ {-   let baraInfo = baraja
+        manoBarajada = barajar generador baraInfo
+        manoLamda = inicialLamda manoBarajada
+    putStrLn $ "Mano Lamda: " ++ manoLamda    
 -}
-
-jugarRonda = do putStrLn $ "Entrate a jugar ronda" 
 
 guardarPartida = do 
     putStrLn "Introduzca un nombre de archivo"
@@ -157,7 +139,6 @@ guardarPartida = do
                 objetoInfo = show objetoInt
                 apuestaInfo = show apuestaInt
                 copyInfo = nombreInfo ++ "\n" ++ juegosInfo ++ "\n" ++ vicLamdaInfo ++ "\n" ++ vicJugInfo ++ "\n" ++ dineroInfo ++ "\n" ++ objetoInfo ++ "\n" ++ apuestaInfo
-            --    variable = copyInfo.nombre
             writeFile fileName $ copyInfo
             main
 
