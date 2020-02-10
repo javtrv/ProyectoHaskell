@@ -1,3 +1,4 @@
+module Cartas where
 {-
     Proyecto Haskell
     Cartas.hs: Es un juego interctivo de BlackJack.
@@ -5,7 +6,6 @@
     Javier Medina     #12-10400.
     Ult. Actualización: 09/02/2020.
 -}
-
 -- Imports
 import System.Random
 import Data.List
@@ -28,6 +28,7 @@ newtype Mano = Mano [Carta] deriving (Eq)
 data Mazo = Vacio | Mitad Carta Mazo Mazo deriving (Show,Eq)
 data Eleccion = Izquierdo | Derecho
 
+--Exports 
 
 -- Funciones Show para cartas
 
@@ -93,9 +94,6 @@ listaPalo = [Treboles,Diamantes,Picas,Corazones]
 
 listaRango :: [Rango]
 listaRango = [N 2,N 3,N 4,N 5,N 6,N 7,N 8,N 9,N 10,Jack,Queen,King,Ace]
-
-ejemploPicas :: Mano
-ejemploPicas = Mano [Carta y Picas |  y <- listaRango]
 
 
 baraja :: Mano
@@ -252,6 +250,7 @@ thrd3 (_,_,c) = c
 desdeMano :: Mano -> Mazo
 desdeMano (Mano []) = Vacio
 desdeMano mano = Mitad (snd3 $ separar mano) (desdeMano $ fst3 $ separar mano) (desdeMano $ thrd3 $ separar mano)
+
 
 -- Funciones de acceso
 
